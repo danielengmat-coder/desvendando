@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visão Estratégica - O Seu Destino</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'mystic-dark': '#0a0a0c',
+                        'mystic-wine': '#2a0812',
+                        'gold-light': '#fde047',
+                        'gold-dark': '#b45309',
+                        'gold-accent': '#d4af37'
+                    },
+                    fontFamily: {
+                        'serif': ['"Playfair Display"', 'Georgia', 'serif'],
+                        'sans': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap');
+
+        body {
+            background: radial-gradient(circle at center, #2a0812 0%, #0a0a0c 70%, #000000 100%);
+            color: #f3f4f6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Classes base de 3D */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+
+        /* Estado "Bloqueado" das Cartas */
+        .cards-locked {
+            filter: grayscale(80%) brightness(0.4) blur(2px);
+            pointer-events: none;
+            transition: all 1.5s ease;
+        }
+        .cards-unlocked {
+            filter: grayscale(0%) brightness(1) blur(0px);
+            pointer-events: auto;
+        }
+
+        /* Estrutura do Leque (Fan) - Eixo de Rotação Restaurado */
+        .hand-container {
+            position: relative;
+            height: 420px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-top: 2rem;
+            perspective: 1200px;
+        }
+
+        .card-wrapper {
+            position: absolute;
+            bottom: 0;
+            transform-origin: bottom center;
+            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform: translate(var(--x), var(--y)) rotate(var(--rot));
+            z-index: var(--z);
+        }
+
+        .card-wrapper.is-selected {
+            transform: translate(0, -60px) rotate(0deg) scale(1.15) !important;
+            z-index: 100 !important;
+        }
+
+        .card-wrapper.is-hidden {
+            transform: translate(var(--x), 300px) rotate(var(--rot));
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Efeito de puxar a carta do leque no Hover */
+        .card-wrapper:hover:not(.is-selected):not(.is-hidden) {
+            transform: translate(var(--x), calc(var(--y) - 50px)) rotate(0deg) scale(1.08);
+            z-index: 50 !important;
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.3);
+        }
+
+        .card-container { width: 240px; height: 350px; cursor: pointer; transition: all 0.3s ease; }
+        .card-face {
+            position: absolute; width: 100%; height: 100%; border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 2px solid #3f3f46;
+        }
+
+        .card-back-visual {
+            background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
+            border-color: #d4af37; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
+        }
+        .card-back-visual::before {
+            content: ''; position: absolute; inset: 8px; border: 1px solid rgba(212, 175, 55, 0.5); border-radius: 6px;
+            background-image: repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.05) 0, rgba(212, 175, 55, 0.05) 2px, transparent 2px, transparent 8px);
+        }
+        .card-back-visual::after { content: '✧'; font-size: 3rem; color: #d4af37; opacity: 0.7; }
+
+        .card-front-visual {
+            background: linear-gradient(to bottom, #2a0812, #0a0a0c); border-color: #d4af37; transform: rotateY(180deg);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; text-align: center;
+        }
+
+        .glow-text { text-shadow: 0 0 10px rgba(212, 175, 55, 0.5); }
+        .modal-overlay { backdrop-filter: blur(8px); transition: opacity 0.5s ease; }
+
+        /* Quiz Options Hover */
+        .quiz-option:hover {
+            border-color: #d4af37;
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+    </style>
+</head>
+<body class="font-sans antialiased flex flex-col items-center justify-center relative min-h-screen">
+
+    <!-- Fumaça/Luz de Fundo -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-30 z-0">
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-mystic-wine rounded-full mix-blend-screen filter blur-[100px] animate-pulse"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-gold-dark rounded-full mix-blend-screen filter blur-[120px] opacity-20"></div>
+    </div>
+
+    <!-- Cabeçalho (Muda após o quiz) -->
+    <header id="mainHeader" class="text-center z-10 mb-8 mt-12 px-4 transition-opacity duration-500">
+        <h2 class="text-gold-accent tracking-[0.3em] text-sm uppercase mb-3 font-semibold">Diagnóstico de Gestão</h2>
+        <h1 class="font-serif text-4xl md:text-5xl lg:text-6xl text-white font-bold mb-4 glow-text">Permita-me ler o seu negócio</h1>
+        <p class="text-gray-400 max-w-lg mx-auto font-light text-lg mb-6">
+            Antes de revelar o seu destino, preciso entender as sombras que impedem o seu crescimento hoje.
+        </p>
+        <button onclick="startQuiz()" id="startBtn" class="bg-gradient-to-r from-gold-dark to-gold-accent text-black font-bold uppercase tracking-wider py-3 px-8 rounded-full hover:from-gold-accent hover:to-gold-light transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+            Iniciar Leitura Estratégica
+        </button>
+    </header>
+
+    <!-- Modal do Diagnóstico (Quiz) -->
+    <div id="quizModal" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none modal-overlay bg-black/80">
+        <div class="bg-mystic-dark border border-gold-accent/40 rounded-xl p-8 max-w-lg w-full mx-4 shadow-[0_0_50px_rgba(212,175,55,0.15)] transform translate-y-4 transition-transform duration-500" id="quizContent">
+            
+            <div class="text-center mb-6">
+                <p id="quizCounter" class="text-gold-accent text-sm tracking-widest uppercase mb-2">Questão 1 de 3</p>
+                <h2 id="quizQuestion" class="font-serif text-2xl text-white font-bold mb-4">Neste momento, qual é o maior inimigo do seu crescimento?</h2>
+            </div>
+
+            <div id="quizOptions" class="space-y-3">
+                <!-- Opções serão injetadas via JS -->
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Mesa com as Cartas (Inicia Bloqueada) -->
+    <main id="cardsArea" class="z-10 w-full max-w-6xl px-4 pb-20 cards-locked transition-all duration-1000">
+        <div class="hand-container">
+            
+            <!-- AS CARTAS (z-index de 1 a 4) - Posições restauradas -->
+            <div class="card-wrapper" style="--x: -180px; --y: 40px; --rot: -18deg; --z: 1;">
+                <div class="card-container perspective-1000" onclick="flipCard(this, 'alquimista', 'O Alquimista', 'Transforme o caos em horas livres e foco absoluto.')">
+                    <div class="card-inner w-full h-full relative transform-style-3d">
+                        <div class="card-face card-back-visual backface-hidden"></div>
+                        <div class="card-face card-front-visual backface-hidden">
+                            <div class="text-5xl mb-4">⏳</div>
+                            <h3 class="font-serif text-2xl text-gold-accent font-bold mb-2">O Alquimista</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-wrapper" style="--x: -60px; --y: 10px; --rot: -6deg; --z: 2;">
+                <div class="card-container perspective-1000" onclick="flipCard(this, 'bussola', 'A Bússola', 'Encontre o norte da prosperidade e destrave lucros.')">
+                    <div class="card-inner w-full h-full relative transform-style-3d">
+                        <div class="card-face card-back-visual backface-hidden"></div>
+                        <div class="card-face card-front-visual backface-hidden">
+                            <div class="text-5xl mb-4">🧭</div>
+                            <h3 class="font-serif text-2xl text-gold-accent font-bold mb-2">A Bússola</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-wrapper" style="--x: 60px; --y: 10px; --rot: 6deg; --z: 3;">
+                <div class="card-container perspective-1000" onclick="flipCard(this, 'espelho', 'O Espelho', 'Revele a sua identidade e construa uma cultura forte.')">
+                    <div class="card-inner w-full h-full relative transform-style-3d">
+                        <div class="card-face card-back-visual backface-hidden"></div>
+                        <div class="card-face card-front-visual backface-hidden">
+                            <div class="text-5xl mb-4">🪞</div>
+                            <h3 class="font-serif text-2xl text-gold-accent font-bold mb-2">O Espelho</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-wrapper" style="--x: 180px; --y: 40px; --rot: 18deg; --z: 4;">
+                <div class="card-container perspective-1000" onclick="flipCard(this, 'coroa', 'A Coroa', 'Assuma a liderança e expanda o seu império sem depender de você.')">
+                    <div class="card-inner w-full h-full relative transform-style-3d">
+                        <div class="card-face card-back-visual backface-hidden"></div>
+                        <div class="card-face card-front-visual backface-hidden">
+                            <div class="text-5xl mb-4">👑</div>
+                            <h3 class="font-serif text-2xl text-gold-accent font-bold mb-2">A Coroa</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal de Revelação e CTA do LinkedIn -->
+    <div id="revealModal" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none modal-overlay bg-black/85 overflow-y-auto pt-20 pb-10">
+        <div class="bg-mystic-dark border border-gold-accent/40 rounded-xl p-8 max-w-2xl w-full mx-4 shadow-[0_0_80px_rgba(212,175,55,0.2)] transform translate-y-4 transition-transform duration-700 relative" id="revealContent">
+            
+            <!-- Círculo da Foto Aumentado (de w-20 h-20 para w-28 h-28) para maior destaque -->
+            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-28 h-28 bg-mystic-dark border-2 border-gold-accent rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.6)] overflow-hidden">
+                <!-- Imagem carregando diretamente do seu repositório no GitHub (Raw Link) -->
+                <img src="https://raw.githubusercontent.com/danielengmat-coder/arquivos/77b945c50d78bde65747733e316e213c085b19a0/v2_20191693-1854-441f-a017-a35d7dec0fbc.jpg" alt="Daniel Fernandes" class="w-full h-full object-cover object-top" id="revealPhoto">
+            </div>
+
+            <div class="text-center mt-10 mb-8">
+                <p class="text-gray-400 text-xs tracking-widest uppercase mb-2">O seu diagnóstico através de:</p>
+                <h2 id="revealCardTitle" class="font-serif text-3xl md:text-4xl text-gold-accent font-bold mb-6 glow-text">Nome da Carta</h2>
+                
+                <div class="text-left space-y-4 text-gray-300 font-light leading-relaxed border-t border-b border-gray-800 py-6">
+                    <p id="revealDiagnosis1">As cartas não mentem. Você me confessou um gargalo claro.</p>
+                    <p id="revealDiagnosis2" class="text-white font-medium">A energia desta carta mostra a solução.</p>
+                    <p id="revealDiagnosis3">É hora de mudar a estratégia.</p>
+                </div>
+            </div>
+
+            <!-- LINKEDIN CTA (Link Atualizado) -->
+            <div class="text-center">
+                <p class="text-sm text-gray-400 mb-4">Não tente resolver isso sozinho. Vamos montar um plano de ação.</p>
+                <a href="https://www.linkedin.com/in/daniel-fernandes-14a156194/" target="_blank" 
+                   class="inline-block w-full sm:w-auto bg-[#0A66C2] text-white font-bold uppercase tracking-wider py-4 px-8 rounded hover:bg-[#004182] transition-colors shadow-[0_0_20px_rgba(10,102,194,0.4)] flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                    Agendar Visão Estratégica
+                </a>
+                <p class="text-xs text-gray-500 mt-4">*Ao clicar, você será direcionado ao meu LinkedIn pessoal para marcarmos a reunião.</p>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================
+           LÓGICA DO DIAGNÓSTICO (QUIZ)
+           ========================================== */
+        const questions = [
+            {
+                q: "Quando você olha para a sua operação hoje, o que você vê de forma mais dolorosa?",
+                options: [
+                    { text: "Eu sou o maior gargalo. Muitas tarefas táticas dependem apenas de mim.", type: "tempo" },
+                    { text: "Muito esforço comercial para atrair os clientes errados ou margens apertadas.", type: "vendas" },
+                    { text: "Equipe desengajada. Sinto que tenho executores, mas não tenho líderes.", type: "lideranca" }
+                ]
+            },
+            {
+                q: "Se você tivesse que se afastar da empresa por 30 dias hoje, o que aconteceria?",
+                options: [
+                    { text: "O faturamento cairia drasticamente. O processo de vendas morre sem mim.", type: "vendas" },
+                    { text: "O caos se instalaria na operação. Prazos e entregas não seriam cumpridos.", type: "tempo" },
+                    { text: "A equipe ficaria perdida sem direcionamento e cultura. Faltaria a visão.", type: "lideranca" }
+                ]
+            },
+            {
+                q: "Qual seria a sua maior vitória para os próximos 6 meses?",
+                options: [
+                    { text: "Criar líderes internos que resolvam problemas sem me acionar.", type: "lideranca" },
+                    { text: "Ter um negócio previsível que bate metas de faturamento todo mês.", type: "vendas" },
+                    { text: "Ter uma rotina onde a empresa funciona perfeitamente sem a minha intervenção.", type: "tempo" }
+                ]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let scores = { tempo: 0, vendas: 0, lideranca: 0 };
+        let dominantPain = "";
+
+        function startQuiz() {
+            document.getElementById('startBtn').style.display = 'none';
+            const modal = document.getElementById('quizModal');
+            const content = document.getElementById('quizContent');
+            
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            content.classList.remove('translate-y-4');
+            
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            if (currentQuestion >= questions.length) {
+                finishQuiz();
+                return;
+            }
+
+            const qData = questions[currentQuestion];
+            document.getElementById('quizCounter').innerText = `Sondagem Estratégica: ${currentQuestion + 1} de 3`;
+            document.getElementById('quizQuestion').innerText = qData.q;
+            
+            const optionsDiv = document.getElementById('quizOptions');
+            optionsDiv.innerHTML = '';
+
+            qData.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-black/40 border border-gray-700 rounded-lg p-4 text-gray-300 transition-all quiz-option";
+                btn.innerText = opt.text;
+                btn.onclick = () => selectOption(opt.type);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function selectOption(type) {
+            scores[type]++;
+            currentQuestion++;
+            
+            // Efeito visual de loading rápido
+            document.getElementById('quizOptions').innerHTML = '<div class="text-center py-4 text-gold-accent animate-pulse">Lendo as entrelinhas...</div>';
+            
+            setTimeout(() => {
+                renderQuestion();
+            }, 600);
+        }
+
+        function finishQuiz() {
+            // Define qual é a maior dor
+            let maxScore = 0;
+            for (const [key, value] of Object.entries(scores)) {
+                if (value > maxScore) {
+                    maxScore = value;
+                    dominantPain = key;
+                }
+            }
+
+            // Esconde modal
+            const modal = document.getElementById('quizModal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+
+            // Atualiza Header
+            document.getElementById('mainHeader').innerHTML = `
+                <h2 class="text-gold-accent tracking-[0.3em] text-sm uppercase mb-3 font-semibold">O Diagnóstico está pronto</h2>
+                <h1 class="font-serif text-4xl text-white font-bold mb-4 glow-text">As cartas estão na mesa</h1>
+                <p class="text-gray-400 text-lg">O seu perfil foi mapeado. Escolha a carta que mais chama a sua atenção para revelar o plano de ação.</p>
+            `;
+
+            // Desbloqueia as cartas
+            document.getElementById('cardsArea').classList.remove('cards-locked');
+            document.getElementById('cardsArea').classList.add('cards-unlocked');
+        }
+
+        /* ==========================================
+           LÓGICA DAS CARTAS E REVELAÇÃO
+           ========================================== */
+        let isCardSelected = false;
+
+        function flipCard(cardElement, cardId, cardTitle, cardSub) {
+            if (isCardSelected || document.getElementById('cardsArea').classList.contains('cards-locked')) return;
+            isCardSelected = true;
+
+            const cardInner = cardElement.querySelector('.card-inner');
+            const currentWrapper = cardElement.closest('.card-wrapper');
+            const icon = cardElement.querySelector('.text-5xl').innerText;
+            
+            // Vira a carta
+            cardInner.classList.add('rotate-y-180', 'is-flipped');
+            currentWrapper.classList.add('is-selected');
+
+            // Abaixa as cartas não escolhidas
+            document.querySelectorAll('.card-wrapper').forEach(wrapper => {
+                if (wrapper !== currentWrapper) wrapper.classList.add('is-hidden');
+            });
+
+            // Chama o Modal final
+            setTimeout(() => {
+                showRevealModal(cardId, cardTitle, icon, cardSub);
+            }, 1200);
+        }
+
+        function showRevealModal(cardId, cardTitle, icon, cardSub) {
+            // document.getElementById('revealIcon').innerText = icon; // Removido, pois agora usamos a foto
+            document.getElementById('revealCardTitle').innerText = cardTitle;
+
+            // GERANDO O TEXTO PERSONALIZADO
+            let p1, p2;
+
+            if (dominantPain === 'tempo') {
+                p1 = "As minhas leituras mostram que a sua rotina está a engolir a sua estratégia. Você assumiu o peso do mundo e tornou-se o maior gargalo do seu próprio negócio. O tempo é o seu maior inimigo hoje.";
+            } else if (dominantPain === 'vendas') {
+                p1 = "Sinto um peso na sua operação comercial. Existe muito esforço sendo feito para resultados que não refletem no caixa. A previsibilidade de lucro é o que mais tira o seu sono.";
+            } else {
+                p1 = "As respostas revelaram um líder cercado de executores, mas solitário na gestão. A falta de uma equipe autogerenciável e de uma cultura forte está a impedir a sua expansão real.";
+            }
+
+            p2 = `E por que você foi atraído por <strong>${cardTitle}</strong>? Porque esta carta significa exatamente isso: <em>${cardSub.toLowerCase()}</em> A solução para o seu gargalo atual não é trabalhar mais horas, mas sim aplicar a inteligência e os processos corretos.`;
+
+            document.getElementById('revealDiagnosis1').innerHTML = p1;
+            document.getElementById('revealDiagnosis2').innerHTML = p2;
+            document.getElementById('revealDiagnosis3').innerHTML = "Eu posso ajudar você a destravar isso. Chegou o momento de pararmos de olhar para os sintomas e resolvermos a causa raiz numa <strong>Sessão de Visão Estratégica comigo.</strong>";
+
+            const modal = document.getElementById('revealModal');
+            const modalContent = document.getElementById('revealContent');
+            
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('translate-y-4');
+            modalContent.classList.add('translate-y-0');
+        }
+    </script>
+</body>
+</html>
