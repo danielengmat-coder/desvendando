@@ -28,10 +28,32 @@
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap');
 
         body {
-            background: radial-gradient(circle at center, #2a0812 0%, #0a0a0c 70%, #000000 100%);
+            background-color: #0a0a0c;
             color: #f3f4f6;
             min-height: 100vh;
             overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Fundo Temático com a sua Foto */
+        .thematic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            /* Combina um degradê escuro na parte de baixo, um sombreamento nas bordas e a sua foto */
+            background-image:
+                linear-gradient(to bottom, transparent 0%, rgba(10, 10, 12, 1) 85%),
+                radial-gradient(circle at 50% 30%, transparent 20%, rgba(10, 10, 12, 0.95) 80%),
+                url('https://raw.githubusercontent.com/danielengmat-coder/arquivos/77b945c50d78bde65747733e316e213c085b19a0/v2_20191693-1854-441f-a017-a35d7dec0fbc.jpg');
+            background-size: cover;
+            background-position: center 15%; /* Foca na área do rosto/ombros */
+            /* Filtros para fundir a foto com o tema místico da página */
+            filter: grayscale(40%) contrast(120%) brightness(0.6) sepia(20%) hue-rotate(-10deg);
+            opacity: 0.35; /* Mantém sutil para não atrapalhar a leitura */
+            pointer-events: none;
         }
 
         /* Classes base de 3D */
@@ -123,8 +145,11 @@
 </head>
 <body class="font-sans antialiased flex flex-col items-center justify-center relative min-h-screen">
 
-    <!-- Fumaça/Luz de Fundo -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-30 z-0">
+    <!-- Seu fundo temático misterioso -->
+    <div class="thematic-bg"></div>
+
+    <!-- Fumaça/Luz de Fundo (mantém o efeito de feixe mágico sobre a sua foto) -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-30 z-[-1]">
         <div class="absolute top-0 left-1/4 w-96 h-96 bg-mystic-wine rounded-full mix-blend-screen filter blur-[100px] animate-pulse"></div>
         <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-gold-dark rounded-full mix-blend-screen filter blur-[120px] opacity-20"></div>
     </div>
@@ -217,13 +242,11 @@
     <div id="revealModal" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none modal-overlay bg-black/85 overflow-y-auto pt-20 pb-10">
         <div class="bg-mystic-dark border border-gold-accent/40 rounded-xl p-8 max-w-2xl w-full mx-4 shadow-[0_0_80px_rgba(212,175,55,0.2)] transform translate-y-4 transition-transform duration-700 relative" id="revealContent">
             
-            <!-- Círculo da Foto Aumentado (de w-20 h-20 para w-28 h-28) para maior destaque -->
-            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-28 h-28 bg-mystic-dark border-2 border-gold-accent rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.6)] overflow-hidden">
-                <!-- Imagem carregando diretamente do seu repositório no GitHub (Raw Link) -->
-                <img src="https://raw.githubusercontent.com/danielengmat-coder/arquivos/77b945c50d78bde65747733e316e213c085b19a0/v2_20191693-1854-441f-a017-a35d7dec0fbc.jpg" alt="Daniel Fernandes" class="w-full h-full object-cover object-top" id="revealPhoto">
+            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-mystic-dark border-2 border-gold-accent rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.5)]">
+                <span id="revealIcon" class="text-3xl">✨</span>
             </div>
 
-            <div class="text-center mt-10 mb-8">
+            <div class="text-center mt-6 mb-8">
                 <p class="text-gray-400 text-xs tracking-widest uppercase mb-2">O seu diagnóstico através de:</p>
                 <h2 id="revealCardTitle" class="font-serif text-3xl md:text-4xl text-gold-accent font-bold mb-6 glow-text">Nome da Carta</h2>
                 
@@ -383,7 +406,7 @@
         }
 
         function showRevealModal(cardId, cardTitle, icon, cardSub) {
-            // document.getElementById('revealIcon').innerText = icon; // Removido, pois agora usamos a foto
+            document.getElementById('revealIcon').innerText = icon;
             document.getElementById('revealCardTitle').innerText = cardTitle;
 
             // GERANDO O TEXTO PERSONALIZADO
