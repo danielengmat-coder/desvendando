@@ -43,16 +43,14 @@
             width: 100%;
             height: 100%;
             z-index: -2;
-            /* Combina um degradê escuro na parte de baixo, um sombreamento nas bordas e a sua foto */
             background-image:
                 linear-gradient(to bottom, transparent 0%, rgba(10, 10, 12, 1) 85%),
                 radial-gradient(circle at 50% 30%, transparent 20%, rgba(10, 10, 12, 0.95) 80%),
                 url('https://raw.githubusercontent.com/danielengmat-coder/arquivos/77b945c50d78bde65747733e316e213c085b19a0/v2_20191693-1854-441f-a017-a35d7dec0fbc.jpg');
             background-size: cover;
-            background-position: center 15%; /* Foca na área do rosto/ombros */
-            /* Filtros para fundir a foto com o tema místico da página */
+            background-position: center 15%;
             filter: grayscale(40%) contrast(120%) brightness(0.6) sepia(20%) hue-rotate(-10deg);
-            opacity: 0.35; /* Mantém sutil para não atrapalhar a leitura */
+            opacity: 0.35;
             pointer-events: none;
         }
 
@@ -73,46 +71,19 @@
             pointer-events: auto;
         }
 
-        /* Estrutura do Leque (Fan) - Eixo de Rotação Restaurado */
-        .hand-container {
-            position: relative;
-            height: 420px;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            margin-top: 2rem;
-            perspective: 1200px;
+        /* Design Clássico das Cartas (Lado a Lado) */
+        .card-container { 
+            width: 250px; 
+            height: 360px; 
+            cursor: pointer; 
+            transition: all 0.4s ease; 
         }
-
-        .card-wrapper {
-            position: absolute;
-            bottom: 0;
-            transform-origin: bottom center;
-            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
-            transform: translate(var(--x), var(--y)) rotate(var(--rot));
-            z-index: var(--z);
-        }
-
-        .card-wrapper.is-selected {
-            transform: translate(0, -60px) rotate(0deg) scale(1.15) !important;
-            z-index: 100 !important;
-        }
-
-        .card-wrapper.is-hidden {
-            transform: translate(var(--x), 300px) rotate(var(--rot));
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* Efeito de puxar a carta do leque no Hover */
-        .card-wrapper:hover:not(.is-selected):not(.is-hidden) {
-            transform: translate(var(--x), calc(var(--y) - 50px)) rotate(0deg) scale(1.08);
-            z-index: 50 !important;
+        
+        .card-container:hover .card-inner:not(.is-flipped) {
+            transform: translateY(-15px) rotateX(5deg);
             box-shadow: 0 20px 40px rgba(212, 175, 55, 0.3);
         }
 
-        .card-container { width: 240px; height: 350px; cursor: pointer; transition: all 0.3s ease; }
         .card-face {
             position: absolute; width: 100%; height: 100%; border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 2px solid #3f3f46;
@@ -136,7 +107,6 @@
         .glow-text { text-shadow: 0 0 10px rgba(212, 175, 55, 0.5); }
         .modal-overlay { backdrop-filter: blur(8px); transition: opacity 0.5s ease; }
 
-        /* Quiz Options Hover */
         .quiz-option:hover {
             border-color: #d4af37;
             background-color: rgba(212, 175, 55, 0.1);
@@ -148,13 +118,12 @@
     <!-- Seu fundo temático misterioso -->
     <div class="thematic-bg"></div>
 
-    <!-- Fumaça/Luz de Fundo (mantém o efeito de feixe mágico sobre a sua foto) -->
     <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-30 z-[-1]">
         <div class="absolute top-0 left-1/4 w-96 h-96 bg-mystic-wine rounded-full mix-blend-screen filter blur-[100px] animate-pulse"></div>
         <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-gold-dark rounded-full mix-blend-screen filter blur-[120px] opacity-20"></div>
     </div>
 
-    <!-- Cabeçalho (Muda após o quiz) -->
+    <!-- Cabeçalho -->
     <header id="mainHeader" class="text-center z-10 mb-8 mt-12 px-4 transition-opacity duration-500">
         <h2 class="text-gold-accent tracking-[0.3em] text-sm uppercase mb-3 font-semibold">Diagnóstico de Gestão</h2>
         <h1 class="font-serif text-4xl md:text-5xl lg:text-6xl text-white font-bold mb-4 glow-text">Permita-me ler o seu negócio</h1>
@@ -182,60 +151,57 @@
         </div>
     </div>
 
-    <!-- Mesa com as Cartas (Inicia Bloqueada) -->
-    <main id="cardsArea" class="z-10 w-full max-w-6xl px-4 pb-20 cards-locked transition-all duration-1000">
-        <div class="hand-container">
-            
-            <!-- AS CARTAS (z-index de 1 a 4) - Posições restauradas -->
-            <div class="card-wrapper" style="--x: -180px; --y: 40px; --rot: -18deg; --z: 1;">
-                <div class="card-container perspective-1000" onclick="flipCard(this, 'alquimista', 'O Alquimista', 'Transforme o caos em horas livres e foco absoluto.')">
-                    <div class="card-inner w-full h-full relative transform-style-3d">
-                        <div class="card-face card-back-visual backface-hidden"></div>
-                        <div class="card-face card-front-visual backface-hidden">
-                            <div class="text-5xl mb-4">⏳</div>
-                            <h3 class="font-serif text-2xl text-gold-accent font-bold mb-2">O Alquimista</h3>
-                        </div>
-                    </div>
+    <!-- Mesa com as Cartas (Layout Clássico Flexbox) -->
+    <main id="cardsArea" class="z-10 w-full max-w-7xl flex flex-col md:flex-row flex-wrap items-center justify-center gap-6 px-4 pb-20 cards-locked transition-all duration-1000 mt-8">
+        
+        <!-- Carta 1: O Alquimista -->
+        <div class="card-container perspective-1000" onclick="flipCard(this, 'alquimista', 'O Alquimista do Tempo', 'Transforme o caos em horas livres e foco absoluto.')">
+            <div class="card-inner w-full h-full relative transform-style-3d">
+                <div class="card-face card-back-visual backface-hidden"></div>
+                <div class="card-face card-front-visual backface-hidden">
+                    <div class="text-5xl mb-4">⏳</div>
+                    <h3 class="font-serif text-xl text-gold-accent font-bold mb-2">O Alquimista do Tempo</h3>
+                    <p class="text-sm text-gray-300">Transforme o caos em horas livres e foco absoluto.</p>
                 </div>
             </div>
-
-            <div class="card-wrapper" style="--x: -60px; --y: 10px; --rot: -6deg; --z: 2;">
-                <div class="card-container perspective-1000" onclick="flipCard(this, 'bussola', 'A Bússola', 'Encontre o norte da prosperidade e destrave lucros.')">
-                    <div class="card-inner w-full h-full relative transform-style-3d">
-                        <div class="card-face card-back-visual backface-hidden"></div>
-                        <div class="card-face card-front-visual backface-hidden">
-                            <div class="text-5xl mb-4">🧭</div>
-                            <h3 class="font-serif text-2xl text-gold-accent font-bold mb-2">A Bússola</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-wrapper" style="--x: 60px; --y: 10px; --rot: 6deg; --z: 3;">
-                <div class="card-container perspective-1000" onclick="flipCard(this, 'espelho', 'O Espelho', 'Revele a sua identidade e construa uma cultura forte.')">
-                    <div class="card-inner w-full h-full relative transform-style-3d">
-                        <div class="card-face card-back-visual backface-hidden"></div>
-                        <div class="card-face card-front-visual backface-hidden">
-                            <div class="text-5xl mb-4">🪞</div>
-                            <h3 class="font-serif text-2xl text-gold-accent font-bold mb-2">O Espelho</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-wrapper" style="--x: 180px; --y: 40px; --rot: 18deg; --z: 4;">
-                <div class="card-container perspective-1000" onclick="flipCard(this, 'coroa', 'A Coroa', 'Assuma a liderança e expanda o seu império sem depender de você.')">
-                    <div class="card-inner w-full h-full relative transform-style-3d">
-                        <div class="card-face card-back-visual backface-hidden"></div>
-                        <div class="card-face card-front-visual backface-hidden">
-                            <div class="text-5xl mb-4">👑</div>
-                            <h3 class="font-serif text-2xl text-gold-accent font-bold mb-2">A Coroa</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
+
+        <!-- Carta 2: A Bússola -->
+        <div class="card-container perspective-1000" onclick="flipCard(this, 'bussola', 'A Bússola Dourada', 'Encontre o norte da prosperidade e destrave lucros.')">
+            <div class="card-inner w-full h-full relative transform-style-3d">
+                <div class="card-face card-back-visual backface-hidden"></div>
+                <div class="card-face card-front-visual backface-hidden">
+                    <div class="text-5xl mb-4">🧭</div>
+                    <h3 class="font-serif text-xl text-gold-accent font-bold mb-2">A Bússola Dourada</h3>
+                    <p class="text-sm text-gray-300">Encontre o norte da prosperidade e destrave lucros.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carta 3: O Espelho -->
+        <div class="card-container perspective-1000" onclick="flipCard(this, 'espelho', 'O Espelho da Verdade', 'Revele a sua identidade e construa uma cultura forte.')">
+            <div class="card-inner w-full h-full relative transform-style-3d">
+                <div class="card-face card-back-visual backface-hidden"></div>
+                <div class="card-face card-front-visual backface-hidden">
+                    <div class="text-5xl mb-4">🪞</div>
+                    <h3 class="font-serif text-xl text-gold-accent font-bold mb-2">O Espelho da Verdade</h3>
+                    <p class="text-sm text-gray-300">Revele a sua identidade e construa uma cultura forte.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carta 4: A Coroa -->
+        <div class="card-container perspective-1000" onclick="flipCard(this, 'coroa', 'A Coroa da Influência', 'Assuma a liderança e expanda o seu império sem depender de você.')">
+            <div class="card-inner w-full h-full relative transform-style-3d">
+                <div class="card-face card-back-visual backface-hidden"></div>
+                <div class="card-face card-front-visual backface-hidden">
+                    <div class="text-5xl mb-4">👑</div>
+                    <h3 class="font-serif text-xl text-gold-accent font-bold mb-2">A Coroa da Influência</h3>
+                    <p class="text-sm text-gray-300">Assuma a liderança e expanda o seu império.</p>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Modal de Revelação e CTA do LinkedIn -->
@@ -257,7 +223,7 @@
                 </div>
             </div>
 
-            <!-- LINKEDIN CTA (Link Atualizado) -->
+            <!-- LINKEDIN CTA -->
             <div class="text-center">
                 <p class="text-sm text-gray-400 mb-4">Não tente resolver isso sozinho. Vamos montar um plano de ação.</p>
                 <a href="https://www.linkedin.com/in/daniel-fernandes-14a156194/" target="_blank" 
@@ -343,7 +309,6 @@
             scores[type]++;
             currentQuestion++;
             
-            // Efeito visual de loading rápido
             document.getElementById('quizOptions').innerHTML = '<div class="text-center py-4 text-gold-accent animate-pulse">Lendo as entrelinhas...</div>';
             
             setTimeout(() => {
@@ -352,7 +317,6 @@
         }
 
         function finishQuiz() {
-            // Define qual é a maior dor
             let maxScore = 0;
             for (const [key, value] of Object.entries(scores)) {
                 if (value > maxScore) {
@@ -361,24 +325,21 @@
                 }
             }
 
-            // Esconde modal
             const modal = document.getElementById('quizModal');
             modal.classList.add('opacity-0', 'pointer-events-none');
 
-            // Atualiza Header
             document.getElementById('mainHeader').innerHTML = `
                 <h2 class="text-gold-accent tracking-[0.3em] text-sm uppercase mb-3 font-semibold">O Diagnóstico está pronto</h2>
                 <h1 class="font-serif text-4xl text-white font-bold mb-4 glow-text">As cartas estão na mesa</h1>
                 <p class="text-gray-400 text-lg">O seu perfil foi mapeado. Escolha a carta que mais chama a sua atenção para revelar o plano de ação.</p>
             `;
 
-            // Desbloqueia as cartas
             document.getElementById('cardsArea').classList.remove('cards-locked');
             document.getElementById('cardsArea').classList.add('cards-unlocked');
         }
 
         /* ==========================================
-           LÓGICA DAS CARTAS E REVELAÇÃO
+           LÓGICA DAS CARTAS E REVELAÇÃO (Layout Clássico)
            ========================================== */
         let isCardSelected = false;
 
@@ -387,19 +348,22 @@
             isCardSelected = true;
 
             const cardInner = cardElement.querySelector('.card-inner');
-            const currentWrapper = cardElement.closest('.card-wrapper');
             const icon = cardElement.querySelector('.text-5xl').innerText;
             
-            // Vira a carta
+            // Anima a carta selecionada
             cardInner.classList.add('rotate-y-180', 'is-flipped');
-            currentWrapper.classList.add('is-selected');
+            cardElement.style.transform = 'scale(1.05)';
+            cardElement.style.zIndex = '20';
 
-            // Abaixa as cartas não escolhidas
-            document.querySelectorAll('.card-wrapper').forEach(wrapper => {
-                if (wrapper !== currentWrapper) wrapper.classList.add('is-hidden');
+            // Esmaece gentilmente as outras cartas (em vez de as esconder)
+            document.querySelectorAll('.card-container').forEach(card => {
+                if (card !== cardElement) {
+                    card.style.opacity = '0.3';
+                    card.style.transform = 'scale(0.95)';
+                    card.style.pointerEvents = 'none';
+                }
             });
 
-            // Chama o Modal final
             setTimeout(() => {
                 showRevealModal(cardId, cardTitle, icon, cardSub);
             }, 1200);
@@ -409,7 +373,6 @@
             document.getElementById('revealIcon').innerText = icon;
             document.getElementById('revealCardTitle').innerText = cardTitle;
 
-            // GERANDO O TEXTO PERSONALIZADO
             let p1, p2;
 
             if (dominantPain === 'tempo') {
